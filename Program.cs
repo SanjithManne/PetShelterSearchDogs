@@ -1,6 +1,8 @@
-﻿// #1 the ourAnimals array will store the following: 
-using System.Security.Cryptography.X509Certificates;
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 
+// ourAnimals array will store the following: 
 string animalSpecies = "";
 string animalID = "";
 string animalAge = "";
@@ -9,17 +11,16 @@ string animalPersonalityDescription = "";
 string animalNickname = "";
 string suggestedDonation = "";
 
-
-// #2 variables that support data entry
+// variables that support data entry
 int maxPets = 8;
 string? readResult;
 string menuSelection = "";
 decimal decimalDonation = 0.00m;
 
-// #3 array used to store runtime data, there is no persisted data
+// array used to store runtime data
 string[,] ourAnimals = new string[maxPets, 7];
 
-// #4 create sample data ourAnimals array entries
+// sample data ourAnimals array entries
 for (int i = 0; i < maxPets; i++)
 {
     switch (i)
@@ -57,11 +58,12 @@ for (int i = 0; i < maxPets; i++)
         case 3:
             animalSpecies = "cat";
             animalID = "c4";
-            animalAge = "3";
-            animalPhysicalDescription = "Medium sized, long hair, yellow, female, about 10 pounds. Uses litter box.";
-            animalPersonalityDescription = "A people loving cat that likes to sit on your lap.";
-            animalNickname = "Lion";
+            animalAge = "";
+            animalPhysicalDescription = "";
+            animalPersonalityDescription = "";
+            animalNickname = "lion";
             suggestedDonation = "";
+
             break;
 
         default:
@@ -71,6 +73,7 @@ for (int i = 0; i < maxPets; i++)
             animalPhysicalDescription = "";
             animalPersonalityDescription = "";
             animalNickname = "";
+            suggestedDonation = "";
             break;
 
     }
@@ -81,14 +84,15 @@ for (int i = 0; i < maxPets; i++)
     ourAnimals[i, 3] = "Nickname: " + animalNickname;
     ourAnimals[i, 4] = "Physical description: " + animalPhysicalDescription;
     ourAnimals[i, 5] = "Personality: " + animalPersonalityDescription;
+
     if (!decimal.TryParse(suggestedDonation, out decimalDonation))
     {
-        decimalDonation = 45.00m;
+        decimalDonation = 45.00m; // if suggestedDonation NOT a number, default to 45.00
     }
-    ourAnimals[i, 6] = $"Suggested Donation: + {decimalDonation:C2}";
+    ourAnimals[i, 6] = $"Suggested Donation: {decimalDonation:C2}";
 }
 
-// #5 display the top-level menu options
+// top-level menu options
 do
 {
     // NOTE: the Console.Clear method is throwing an exception in debug sessions
@@ -100,13 +104,14 @@ do
     Console.WriteLine();
     Console.WriteLine("Enter your selection number (or type Exit to exit the program)");
 
+    bool dogMatch = false;
     readResult = Console.ReadLine();
     if (readResult != null)
     {
         menuSelection = readResult.ToLower();
     }
 
-    // use switch-case to process the selected menu option
+    // switch-case to process the selected menu option
     switch (menuSelection)
     {
         case "1":
@@ -118,56 +123,91 @@ do
                     Console.WriteLine();
                     for (int j = 0; j < 7; j++)
                     {
-                        Console.WriteLine(ourAnimals[i, j]);
+                        Console.WriteLine(ourAnimals[i, j].ToString());
                     }
                 }
             }
-            Console.WriteLine("\n\rPress the Enter key to continue");
+
+            Console.WriteLine("\r\nPress the Enter key to continue");
             readResult = Console.ReadLine();
 
             break;
 
         case "2":
-            // Display all dogs with a specified characteristic
+            // #1 Display all dogs with a multiple search characteristics
             string dogCharacteristic = "";
-            bool validEntry = false;
+            string[] dogMultiDescriptions = new string[] { };
+
             while (dogCharacteristic == "")
             {
-                // have the user enter physical characteristics to search for
-                Console.WriteLine($"\nEnter one desired dog characteristics to search for");
+                // #2 have user enter multiple comma separated characteristics to search for
+                Console.WriteLine($"\r\nEnter desired dog characteristics to search for seperated by commas");
                 readResult = Console.ReadLine();
                 if (readResult != null)
                 {
                     dogCharacteristic = readResult.ToLower().Trim();
+                    dogMultiDescriptions = dogCharacteristic.Split(",");
+                    Array.Sort(dogMultiDescriptions);
+                    Console.WriteLine();
                 }
             }
 
+            string dogDescription = "";
+
+            // #4 update to "rotating" animation with countdown
+            string[] searchingIcons = { ".  ", ".. ", "..." };
+
+            // loop ourAnimals array to search for matching animals
             for (int i = 0; i < maxPets; i++)
             {
+
                 if (ourAnimals[i, 1].Contains("dog"))
                 {
-                    string dogDescription = "";
-                    dogDescription = ourAnimals[i, 4] + "\n" + ourAnimals[i, 5];
 
-                    if (dogDescription.Contains(dogCharacteristic))
+                    // Search combined descriptions and report results
+                    dogDescription = ourAnimals[i, 4] + "\r\n" + ourAnimals[i, 5];
+
+                    for (int j = 5; j > -1; j--)
                     {
-                        Console.WriteLine($"\nOur Dog {ourAnimals[i, 3]} ia a match");
-                        Console.WriteLine(dogDescription);
-                        validEntry = true;
+                        // #5 update "searching" message to show countdown 
+                        foreach (string icon in searchingIcons)
+                        {
+                            Console.Write($"\rsearching our dog {ourAnimals[i, 3].Remove(0, 10)} for {dogCharacteristic} {icon}");
+                            Thread.Sleep(250);
+                        }
+
+                        Console.Write($"\r{new String(' ', Console.BufferWidth)}");
+                    }
+
+                    // #3a iterate submitted characteristic terms and search description for each term
+
+                    foreach (string description in dogMultiDescriptions)
+                    {
+                        if (dogDescription.Contains(description))
+                        {
+                            Console.WriteLine($"Our dog {ourAnimals[i, 3].Remove(0, 10)} is a {description.Trim()} match!");
+                            dogMatch = true;
+                        }
+                    }
+
+                    // #3d if "this dog" is match write match message + dog description
+                    if (dogMatch)
+                    {
+                        Console.WriteLine($"\n{ourAnimals[i, 3]} ({ourAnimals[i, 0]})\n{ourAnimals[i, 4]}\n{ourAnimals[i, 5]}");
                     }
                 }
+
+                // #3d if "this dog" is match write match message + dog description
             }
-            if (validEntry == false)
+
+            if (dogMatch == false)
             {
-                Console.WriteLine("\nNone of our dogs are a match for: " + dogCharacteristic);
+                Console.WriteLine("None of our dogs are a match for: " + dogCharacteristic);
             }
 
-            Console.WriteLine("\n\rPress the Enter key to continue.");
+            Console.WriteLine("\n\rPress the Enter key to continue");
             readResult = Console.ReadLine();
-            break;
 
-        default:
             break;
     }
-
 } while (menuSelection != "exit");
